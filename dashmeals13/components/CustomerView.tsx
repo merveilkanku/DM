@@ -2763,17 +2763,13 @@ export const CustomerView: React.FC<Props> = ({ user, allRestaurants, onLogout, 
         isOpen={isCartOpen} 
         onClose={closeCart} 
         items={cart} 
-        onRemove={removeFromCart} 
+        onRemoveItem={removeFromCart}
         onUpdateQuantity={updateQuantity}
-        onCheckout={handleCheckout} 
-        total={cartTotal} 
-        isLoading={isCheckingOut} 
-        currency={allRestaurants.find(r => r.id === cart[0]?.restaurantId)?.currency} 
-        exchangeRate={allRestaurants.find(r => r.id === cart[0]?.restaurantId)?.exchangeRate}
-        displayCurrencyMode={allRestaurants.find(r => r.id === cart[0]?.restaurantId)?.displayCurrencyMode}
-        paymentConfig={allRestaurants.find(r => r.id === cart[0]?.restaurantId)?.paymentConfig}
+        onClearCart={() => setCart([])}
+        onPlaceOrder={handleCheckout}
+        restaurantPaymentConfig={allRestaurants.find(r => r.id === cart[0]?.restaurantId)?.paymentConfig}
+        restaurantId={cart[0]?.restaurantId || ''}
         language={language}
-        userRole={user.role}
       />
 
       {/* HELP CENTER OVERLAY */}
