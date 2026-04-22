@@ -2,6 +2,10 @@ import { createClient } from '@supabase/supabase-js';
 
 // URL de votre projet Supabase
 const DEFAULT_URL = 'https://xistgrankjxcaqypncar.supabase.co';
+
+// Detection de Capacitor
+const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor;
+
 const supabaseUrl = (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_URL) || import.meta.env.VITE_SUPABASE_URL || DEFAULT_URL;
 const envKey = (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_ANON_KEY) || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -21,6 +25,6 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'implicit'
+    flowType: isCapacitor ? 'pkce' : 'implicit'
   }
 });

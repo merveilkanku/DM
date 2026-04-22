@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { App } from '@capacitor/app';
 import { supabase, isDefaultProject } from '../lib/supabase';
 import { User, UserRole, BusinessType } from '../types';
 import { CITIES_RDC, APP_LOGO_URL } from '../constants';
@@ -62,8 +63,43 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
   const [staffName, setStaffName] = useState('');
   const [staffPin, setStaffPin] = useState('');
 
-  // Listen for OAuth messages from popup
+  // Listen for OAuth messages from popup and App Deep Links
   useEffect(() => {
+    const isCapacitor = (window as any).Capacitor;
+    let appListener: any = null;
+
+    if (isCapacitor) {
+      appListener = App.addListener('appUrlOpen', async (event: any) => {
+        console.log('App opened with URL:', event.url);
+        if (event.url.includes('com.dashmeals.android://callback') || event.url.includes('com.dashmeals.android://login-callback')) {
+          const urlStr = event.url.replace('com.dashmeals.android://', 'https://dashmeals.com/');
+          const url = new URL(urlStr);
+          let accessToken = '';
+          let refreshToken = '';
+
+          if (url.hash) {
+            const params = new URLSearchParams(url.hash.substring(1));
+            accessToken = params.get('access_token') || '';
+            refreshToken = params.get('refresh_token') || '';
+          } else {
+            accessToken = url.searchParams.get('access_token') || '';
+            refreshToken = url.searchParams.get('refresh_token') || '';
+          }
+
+          if (accessToken && refreshToken) {
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (error) {
+              console.error('Error setting session:', error);
+              setError(error.message);
+            }
+          }
+        }
+      });
+    }
+
     const handleMessage = (event: MessageEvent) => {
       console.log("📩 [AuthScreen] Message reçu de la popup:", event.origin, event.data?.type);
       
@@ -104,6 +140,9 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
     return () => {
       window.removeEventListener('message', handleMessage);
       subscription.unsubscribe();
+      if (appListener) {
+        appListener.remove();
+      }
     };
   }, []);
 
@@ -140,11 +179,12 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
           city,
       }));
 
-      const currentOrigin = window.location.origin;
+      const isCapacitor = (window as any).Capacitor;
+      const currentOrigin = isCapacitor ? 'com.dashmeals.android://callback' : window.location.origin;
       console.log("OAuth Redirect URL:", currentOrigin);
 
       // Detect if we are in the AI Studio preview
-      const isPreview = currentOrigin.includes('.run.app');
+      const isPreview = !isCapacitor && window.location.origin.includes('.run.app');
 
       if (isPreview) {
           // In preview (iframe), we MUST use a popup

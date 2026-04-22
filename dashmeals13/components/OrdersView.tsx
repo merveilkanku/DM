@@ -6,6 +6,7 @@ import { Order, OrderStatus, Restaurant } from '../types';
 import { formatDualPrice } from '../utils/format';
 import { supabase } from '../lib/supabase';
 import { DeliveryTrackingMap } from './DeliveryTrackingMap';
+import { useNativePicker } from '../utils/useNativePicker';
 
 interface Props {
   orders: Order[];
@@ -18,6 +19,7 @@ interface Props {
 
 export const OrdersView: React.FC<Props> = ({ orders, onChat, onBrowse, onOrderUpdated, subscribedRestaurantIds = [], allRestaurants = [] }) => {
   const [confirmingOrder, setConfirmingOrder] = useState<Order | null>(null);
+  const { isCapacitor, pickImage } = useNativePicker();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [proofFile, setProofFile] = useState<File | null>(null);
@@ -375,12 +377,26 @@ export const OrdersView: React.FC<Props> = ({ orders, onChat, onBrowse, onOrderU
                                         {order.paymentStatus === 'failed' ? "Uploader une nouvelle preuve" : "Changer la preuve de paiement"}
                                         <input 
                                             type="file" 
+                                            id={`reupload-payment-${order.id}`}
                                             accept="image/*" 
                                             className="hidden" 
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
                                                 if (file) handleReuploadPaymentProof(order.id, file);
                                             }} 
+                                        />
+                                        <button
+                                            type="button"
+                                            className="absolute inset-0 w-full h-full opacity-0 z-10"
+                                            onClick={async (e) => {
+                                              e.preventDefault();
+                                              if (isCapacitor) {
+                                                const file = await pickImage({ asFile: true });
+                                                if (file instanceof File) handleReuploadPaymentProof(order.id, file);
+                                              } else {
+                                                document.getElementById(`reupload-payment-${order.id}`)?.click();
+                                              }
+                                            }}
                                         />
                                     </label>
                                 </div>
@@ -614,7 +630,26 @@ export const OrdersView: React.FC<Props> = ({ orders, onChat, onBrowse, onOrderU
                                         <p className="text-xs font-medium">Prendre une photo</p>
                                     </div>
                                 )}
-                                <input type="file" accept="image/*" className="hidden" onChange={e => setProofFile(e.target.files?.[0] || null)} />
+                                <input
+                                    type="file"
+                                    id="manual-proof-input"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={e => setProofFile(e.target.files?.[0] || null)}
+                                />
+                                <button
+                                    type="button"
+                                    className="absolute inset-0 w-full h-full opacity-0 z-10"
+                                    onClick={async (e) => {
+                                      e.preventDefault();
+                                      if (isCapacitor) {
+                                        const file = await pickImage({ asFile: true });
+                                        if (file instanceof File) setProofFile(file);
+                                      } else {
+                                        document.getElementById('manual-proof-input')?.click();
+                                      }
+                                    }}
+                                />
                             </label>
                         </div>
 

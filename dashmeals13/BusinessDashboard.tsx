@@ -15,6 +15,7 @@ import {
   RestaurantPaymentConfig,
 } from "./types";
 import { getBusinessInsights, getSmartSupportResponse } from "./lib/gemini";
+import { useNativePicker } from "./utils/useNativePicker";
 import {
   Plus,
   Trash2,
@@ -352,6 +353,7 @@ export const BusinessDashboard: React.FC<Props> = ({
   setFont,
 }) => {
   const t = useTranslation(language);
+  const { isCapacitor, pickImage, pickFile } = useNativePicker();
 
   // RBAC Helper Functions
   const canAccessView = (view: DashboardView): boolean => {
@@ -3879,18 +3881,32 @@ export const BusinessDashboard: React.FC<Props> = ({
                 Photo du plat
               </label>
               <div className="flex items-center space-x-2">
-                <label className="cursor-pointer bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold flex items-center">
+                <label className="cursor-pointer bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold flex items-center relative">
                   <Upload size={16} className="mr-2" />
                   {newItemImageFile
                     ? "Photo sélectionnée"
                     : "Choisir une photo"}
                   <input
                     type="file"
+                    id="new-item-image-input"
                     accept="image/*"
                     className="hidden"
                     onChange={(e) =>
                       setNewItemImageFile(e.target.files?.[0] || null)
                     }
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-0 w-full h-full opacity-0 z-10"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      if (isCapacitor) {
+                        const file = await pickImage({ asFile: true });
+                        if (file instanceof File) setNewItemImageFile(file);
+                      } else {
+                        document.getElementById('new-item-image-input')?.click();
+                      }
+                    }}
                   />
                 </label>
                 {newItemImageFile && (
@@ -4240,6 +4256,20 @@ export const BusinessDashboard: React.FC<Props> = ({
                     id="id-card-upload"
                     onChange={(e) => setIdCardFile(e.target.files?.[0] || null)}
                     disabled={restaurant.verificationStatus === "pending"}
+                  />
+                  <button
+                    type="button"
+                    disabled={restaurant.verificationStatus === "pending"}
+                    className="absolute inset-0 w-full h-full opacity-0 z-10"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      if (isCapacitor) {
+                        const file = await pickImage({ asFile: true });
+                        if (file instanceof File) setIdCardFile(file);
+                      } else {
+                        document.getElementById('id-card-upload')?.click();
+                      }
+                    }}
                   />
                   <label
                     htmlFor="id-card-upload"
@@ -5949,7 +5979,7 @@ export const BusinessDashboard: React.FC<Props> = ({
                       placeholder="https://images.unsplash.com/..."
                     />
                   </div>
-                  <label className="cursor-pointer bg-brand-500/10 hover:bg-brand-500 text-brand-500 hover:text-white px-6 py-4 rounded-[20px] font-bold text-xs flex items-center justify-center border border-brand-500/20 transition-all active:scale-95 shadow-lg group">
+                  <label className="cursor-pointer bg-brand-500/10 hover:bg-brand-500 text-brand-500 hover:text-white px-6 py-4 rounded-[20px] font-bold text-xs flex items-center justify-center border border-brand-500/20 transition-all active:scale-95 shadow-lg group relative">
                     <Upload
                       size={18}
                       className="mr-3 group-hover:-translate-y-1 transition-transform"
@@ -5957,11 +5987,25 @@ export const BusinessDashboard: React.FC<Props> = ({
                     {coverImageFile ? "Prêt à synchroniser" : "Charger Image"}
                     <input
                       type="file"
+                      id="cover-image-upload"
                       accept="image/*"
                       className="hidden"
                       onChange={(e) =>
                         setCoverImageFile(e.target.files?.[0] || null)
                       }
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-0 w-full h-full opacity-0 z-10"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        if (isCapacitor) {
+                          const file = await pickImage({ asFile: true });
+                          if (file instanceof File) setCoverImageFile(file);
+                        } else {
+                          document.getElementById('cover-image-upload')?.click();
+                        }
+                      }}
                     />
                   </label>
                 </div>
@@ -8404,6 +8448,7 @@ export const BusinessDashboard: React.FC<Props> = ({
                         </span>
                         <input
                           type="file"
+                          id="promo-upload"
                           accept={
                             newPromoType === "video" ? "video/*" : "image/*"
                           }
@@ -8414,6 +8459,26 @@ export const BusinessDashboard: React.FC<Props> = ({
                               setPromoFile(file);
                               setNewPromoUrl("");
                               setPromoError(null);
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="absolute inset-0 w-full h-full opacity-0 z-10"
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            if (isCapacitor) {
+                              const file = await (newPromoType === 'image'
+                                ? pickImage({ asFile: true })
+                                : pickFile({ types: ['video/mp4', 'video/quicktime'], asFile: true }));
+
+                              if (file instanceof File) {
+                                setPromoFile(file);
+                                setNewPromoUrl("");
+                                setPromoError(null);
+                              }
+                            } else {
+                              document.getElementById('promo-upload')?.click();
                             }
                           }}
                         />
