@@ -14,6 +14,7 @@ import { AlertTriangle, Store, ArrowRight, Zap } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { App as CapApp } from '@capacitor/app';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { toast } from 'sonner';
 
 const OfflineBanner = ({ isSupabaseReachable }: { isSupabaseReachable: boolean }) => (!isSupabaseReachable) ? (
@@ -87,6 +88,17 @@ function App() {
   }, [currentUser?.id, currentUser?.settings?.appLockEnabled]);
 
   useEffect(() => {
+    if ((window as any).Capacitor) {
+      StatusBar.setStyle({ style: theme === 'dark' ? Style.Dark : Style.Light }).catch(() => {});
+      if (theme === 'light') {
+        StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
+      } else {
+        StatusBar.setBackgroundColor({ color: '#000000' }).catch(() => {});
+      }
+    }
+  }, [theme]);
+
+  useEffect(() => {
     // Update the global sans font variable to match the selected font
     const fontValue = `var(--font-${font})`;
     document.documentElement.style.setProperty('--font-sans', fontValue);
@@ -141,21 +153,17 @@ function App() {
       }
     };
 
-    // Set up Deep Link listeners
-    const setupDeepLinks = async () => {
+    if ((window as any).Capacitor) {
       CapApp.addListener('appUrlOpen', (data: any) => {
-        console.log('🔗 [DeepLink] Received url:', data.url);
         handleDeepLink(data.url);
       });
 
-      const launchUrl = await CapApp.getLaunchUrl();
-      if (launchUrl?.url) {
-        console.log('🚀 [DeepLink] App launched with url:', launchUrl.url);
-        handleDeepLink(launchUrl.url);
-      }
-    };
-
-    setupDeepLinks();
+      CapApp.getLaunchUrl().then((launchUrl) => {
+        if (launchUrl?.url) {
+          handleDeepLink(launchUrl.url);
+        }
+      });
+    }
 
     const initSession = async () => {
         console.log("🚀 [Auth] Début initSession");

@@ -26,6 +26,12 @@ html, body {
   overflow-x: hidden;
 }
 
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .dark body {
   background-color: #0A0A0A;
 }
