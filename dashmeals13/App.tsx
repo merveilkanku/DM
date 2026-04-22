@@ -13,6 +13,7 @@ import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { AlertTriangle, Store, ArrowRight, Zap } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
+import { App as CapApp } from '@capacitor/app';
 
 const OfflineBanner = ({ isSupabaseReachable }: { isSupabaseReachable: boolean }) => (!isSupabaseReachable) ? (
   <div className="bg-red-600 text-white text-[10px] sm:text-xs font-bold px-4 py-2 text-center flex justify-center items-center sticky top-0 z-[100] shadow-lg animate-in slide-in-from-top duration-300">
@@ -95,6 +96,56 @@ function App() {
 
   // Initialisation et écoute de la session
   useEffect(() => {
+    const handleDeepLink = async (url: string) => {
+      console.log('App received deep link:', url);
+      if (url.includes('com.dashmeals.android://callback') || url.includes('com.dashmeals.android://login-callback')) {
+        const urlStr = url.replace('com.dashmeals.android://', 'https://dashmeals.com/');
+        const urlObj = new URL(urlStr);
+        let accessToken = '';
+        let refreshToken = '';
+        let code = '';
+
+        if (urlObj.hash) {
+          const params = new URLSearchParams(urlObj.hash.substring(1));
+          accessToken = params.get('access_token') || '';
+          refreshToken = params.get('refresh_token') || '';
+        }
+
+        if (!accessToken) {
+          accessToken = urlObj.searchParams.get('access_token') || '';
+          refreshToken = urlObj.searchParams.get('refresh_token') || '';
+          code = urlObj.searchParams.get('code') || '';
+        }
+
+        if (accessToken || code) {
+          try {
+            if (code) {
+              await supabase.auth.exchangeCodeForSession(code);
+            } else if (accessToken && refreshToken) {
+              await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+            }
+          } catch (err) {
+            console.error('Session establishment error:', err);
+          }
+        }
+      }
+    };
+
+    if ((window as any).Capacitor) {
+      CapApp.addListener('appUrlOpen', (data: any) => {
+        handleDeepLink(data.url);
+      });
+
+      CapApp.getLaunchUrl().then((launchUrl) => {
+        if (launchUrl?.url) {
+          handleDeepLink(launchUrl.url);
+        }
+      });
+    }
+
     const initSession = async () => {
         console.log("🚀 [Auth] Début initSession");
         setIsAppInitializing(true);
