@@ -1,0 +1,4 @@
+43:DROP POLICY IF EXISTS "Superadmin Access Profiles" ON public.profiles;
+44:CREATE POLICY "Superadmin Access Profiles" ON public.profiles FOR ALL USING (
+216:DROP POLICY IF EXISTS "Public Access Profiles" ON public.profiles;
+217:CREATE POLICY "Public Access Profiles" ON public.profiles FOR ALL USING (true) WITH CHECK (true);
