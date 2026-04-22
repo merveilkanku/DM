@@ -68,34 +68,48 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
     const isCapacitor = (window as any).Capacitor;
     let appListener: any = null;
 
+    const handleDeepLink = async (url: string) => {
+      console.log('Handling URL:', url);
+      if (url.includes('com.dashmeals.android://callback') || url.includes('com.dashmeals.android://login-callback')) {
+        const urlStr = url.replace('com.dashmeals.android://', 'https://dashmeals.com/');
+        const urlObj = new URL(urlStr);
+        let accessToken = '';
+        let refreshToken = '';
+
+        if (urlObj.hash) {
+          const params = new URLSearchParams(urlObj.hash.substring(1));
+          accessToken = params.get('access_token') || '';
+          refreshToken = params.get('refresh_token') || '';
+        } else {
+          accessToken = urlObj.searchParams.get('access_token') || '';
+          refreshToken = urlObj.searchParams.get('refresh_token') || '';
+        }
+
+        if (accessToken && refreshToken) {
+          setLoading(true);
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) {
+            console.error('Error setting session:', error);
+            setError(error.message);
+            setLoading(false);
+          }
+        }
+      }
+    };
+
     if (isCapacitor) {
+      // Handle app opening from URL
       appListener = App.addListener('appUrlOpen', async (event: any) => {
-        console.log('App opened with URL:', event.url);
-        if (event.url.includes('com.dashmeals.android://callback') || event.url.includes('com.dashmeals.android://login-callback')) {
-          const urlStr = event.url.replace('com.dashmeals.android://', 'https://dashmeals.com/');
-          const url = new URL(urlStr);
-          let accessToken = '';
-          let refreshToken = '';
+        handleDeepLink(event.url);
+      });
 
-          if (url.hash) {
-            const params = new URLSearchParams(url.hash.substring(1));
-            accessToken = params.get('access_token') || '';
-            refreshToken = params.get('refresh_token') || '';
-          } else {
-            accessToken = url.searchParams.get('access_token') || '';
-            refreshToken = url.searchParams.get('refresh_token') || '';
-          }
-
-          if (accessToken && refreshToken) {
-            const { error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-            if (error) {
-              console.error('Error setting session:', error);
-              setError(error.message);
-            }
-          }
+      // Handle case where app was already opened by a URL
+      App.getLaunchUrl().then((launchUrl) => {
+        if (launchUrl?.url) {
+          handleDeepLink(launchUrl.url);
         }
       });
     }
