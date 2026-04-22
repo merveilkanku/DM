@@ -14,6 +14,7 @@ import { AlertTriangle, Store, ArrowRight, Zap } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { App as CapApp } from '@capacitor/app';
+import { toast } from 'sonner';
 
 const OfflineBanner = ({ isSupabaseReachable }: { isSupabaseReachable: boolean }) => (!isSupabaseReachable) ? (
   <div className="bg-red-600 text-white text-[10px] sm:text-xs font-bold px-4 py-2 text-center flex justify-center items-center sticky top-0 z-[100] shadow-lg animate-in slide-in-from-top duration-300">
@@ -118,33 +119,43 @@ function App() {
         }
 
         if (accessToken || code) {
+          console.log('Valid session data found in Deep Link, setting session...');
+          toast.info("Connexion en cours...");
           try {
             if (code) {
-              await supabase.auth.exchangeCodeForSession(code);
+              const { error } = await supabase.auth.exchangeCodeForSession(code);
+              if (error) throw error;
             } else if (accessToken && refreshToken) {
-              await supabase.auth.setSession({
+              const { error } = await supabase.auth.setSession({
                 access_token: accessToken,
                 refresh_token: refreshToken,
               });
+              if (error) throw error;
             }
-          } catch (err) {
+            toast.success("Connecté avec succès !");
+          } catch (err: any) {
             console.error('Session establishment error:', err);
+            toast.error("Échec de la connexion : " + (err.message || "Erreur inconnue"));
           }
         }
       }
     };
 
-    if ((window as any).Capacitor) {
+    // Set up Deep Link listeners
+    const setupDeepLinks = async () => {
       CapApp.addListener('appUrlOpen', (data: any) => {
+        console.log('🔗 [DeepLink] Received url:', data.url);
         handleDeepLink(data.url);
       });
 
-      CapApp.getLaunchUrl().then((launchUrl) => {
-        if (launchUrl?.url) {
-          handleDeepLink(launchUrl.url);
-        }
-      });
-    }
+      const launchUrl = await CapApp.getLaunchUrl();
+      if (launchUrl?.url) {
+        console.log('🚀 [DeepLink] App launched with url:', launchUrl.url);
+        handleDeepLink(launchUrl.url);
+      }
+    };
+
+    setupDeepLinks();
 
     const initSession = async () => {
         console.log("🚀 [Auth] Début initSession");

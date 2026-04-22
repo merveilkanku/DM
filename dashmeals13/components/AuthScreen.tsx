@@ -212,7 +212,7 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
 
           if (error) throw error;
           if (data?.url) {
-            await Browser.open({ url: data.url, windowName: '_system' });
+            await Browser.open({ url: data.url, windowName: '_self' });
           }
       } else {
           // Standard web
