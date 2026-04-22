@@ -14,7 +14,6 @@ import { AlertTriangle, Store, ArrowRight, Zap } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { App as CapApp } from '@capacitor/app';
-import { StatusBar, Style } from '@capacitor/status-bar';
 import { toast } from 'sonner';
 
 const OfflineBanner = ({ isSupabaseReachable }: { isSupabaseReachable: boolean }) => (!isSupabaseReachable) ? (
@@ -88,15 +87,10 @@ function App() {
   }, [currentUser?.id, currentUser?.settings?.appLockEnabled]);
 
   useEffect(() => {
-    if ((window as any).Capacitor) {
-      StatusBar.setStyle({ style: theme === 'dark' ? Style.Dark : Style.Light }).catch(() => {});
-      if (theme === 'light') {
-        StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
-      } else {
-        StatusBar.setBackgroundColor({ color: '#000000' }).catch(() => {});
-      }
+    if (currentUser) {
+      setShowAuth(false);
     }
-  }, [theme]);
+  }, [currentUser]);
 
   useEffect(() => {
     // Update the global sans font variable to match the selected font
@@ -153,17 +147,21 @@ function App() {
       }
     };
 
-    if ((window as any).Capacitor) {
+    // Set up Deep Link listeners
+    const setupDeepLinks = async () => {
       CapApp.addListener('appUrlOpen', (data: any) => {
+        console.log('🔗 [DeepLink] Received url:', data.url);
         handleDeepLink(data.url);
       });
 
-      CapApp.getLaunchUrl().then((launchUrl) => {
-        if (launchUrl?.url) {
-          handleDeepLink(launchUrl.url);
-        }
-      });
-    }
+      const launchUrl = await CapApp.getLaunchUrl();
+      if (launchUrl?.url) {
+        console.log('🚀 [DeepLink] App launched with url:', launchUrl.url);
+        handleDeepLink(launchUrl.url);
+      }
+    };
+
+    setupDeepLinks();
 
     const initSession = async () => {
         console.log("🚀 [Auth] Début initSession");
@@ -175,8 +173,9 @@ function App() {
                 console.warn("⚠️ [Auth] Safety Timeout: Force stop loading...");
                 setLoading(false);
                 setIsAppInitializing(false);
+                setShowSplash(false);
             }
-        }, 5000); // 5s safety timeout
+        }, 8000); // 8s safety timeout
 
         // 1. PRIORITÉ : Détection immédiate du lien de récupération
         if (isRecoveryMode) {
