@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { App } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
+import { Keyboard } from '@capacitor/keyboard';
 import { supabase, isDefaultProject } from '../lib/supabase';
 import { User, UserRole, BusinessType } from '../types';
 import { CITIES_RDC, APP_LOGO_URL } from '../constants';
@@ -63,57 +65,8 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
   const [staffName, setStaffName] = useState('');
   const [staffPin, setStaffPin] = useState('');
 
-  // Listen for OAuth messages from popup and App Deep Links
+  // Listen for OAuth messages from popup
   useEffect(() => {
-    const isCapacitor = (window as any).Capacitor;
-    let appListener: any = null;
-
-    const handleDeepLink = async (url: string) => {
-      console.log('Handling URL:', url);
-      if (url.includes('com.dashmeals.android://callback') || url.includes('com.dashmeals.android://login-callback')) {
-        const urlStr = url.replace('com.dashmeals.android://', 'https://dashmeals.com/');
-        const urlObj = new URL(urlStr);
-        let accessToken = '';
-        let refreshToken = '';
-
-        if (urlObj.hash) {
-          const params = new URLSearchParams(urlObj.hash.substring(1));
-          accessToken = params.get('access_token') || '';
-          refreshToken = params.get('refresh_token') || '';
-        } else {
-          accessToken = urlObj.searchParams.get('access_token') || '';
-          refreshToken = urlObj.searchParams.get('refresh_token') || '';
-        }
-
-        if (accessToken && refreshToken) {
-          setLoading(true);
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          if (error) {
-            console.error('Error setting session:', error);
-            setError(error.message);
-            setLoading(false);
-          }
-        }
-      }
-    };
-
-    if (isCapacitor) {
-      // Handle app opening from URL
-      appListener = App.addListener('appUrlOpen', async (event: any) => {
-        handleDeepLink(event.url);
-      });
-
-      // Handle case where app was already opened by a URL
-      App.getLaunchUrl().then((launchUrl) => {
-        if (launchUrl?.url) {
-          handleDeepLink(launchUrl.url);
-        }
-      });
-    }
-
     const handleMessage = (event: MessageEvent) => {
       console.log("📩 [AuthScreen] Message reçu de la popup:", event.origin, event.data?.type);
       
@@ -244,14 +197,29 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
                 }
             }, 1000);
           }
+      } else if (isCapacitor) {
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: provider,
+            options: {
+              redirectTo: currentOrigin,
+              skipBrowserRedirect: true,
+              queryParams: {
+                access_type: 'offline',
+                prompt: 'consent',
+              }
+            }
+          });
+
+          if (error) throw error;
+          if (data?.url) {
+            await Browser.open({ url: data.url, windowName: '_system' });
+          }
       } else {
-          // In APK or standard web, use normal redirect (no popup)
-          // This fixes the issue where window.open opens the external browser in APKs
+          // Standard web
           const { error } = await supabase.auth.signInWithOAuth({
             provider: provider,
             options: {
               redirectTo: currentOrigin,
-              // skipBrowserRedirect is false by default, so it will redirect the current window
               queryParams: {
                 access_type: 'offline',
                 prompt: 'consent',
@@ -506,8 +474,15 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
   };
 
 
+  useEffect(() => {
+    if ((window as any).Capacitor) {
+      Keyboard.setAccessoryBarVisible({ isVisible: false }).catch(() => {});
+    }
+  }, []);
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden transition-colors duration-500">
+    <div className="min-h-screen bg-slate-50 dark:bg-black flex flex-col items-center p-4 relative overflow-y-auto transition-colors duration-500">
+      <div className="w-full h-20 shrink-0 sm:hidden"></div> {/* Spacer for top on mobile */}
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-brand-500/10 rounded-full blur-[120px] animate-pulse"></div>
@@ -524,7 +499,7 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
         </button>
       )}
 
-      <div className="w-full max-w-md relative z-10 glass rounded-[32px] shadow-2xl overflow-hidden border border-white/40 dark:border-white/10">
+      <div className="w-full max-w-md relative z-10 glass rounded-[32px] shadow-2xl overflow-hidden border border-white/40 dark:border-white/10 my-8">
         
         {/* Header */}
         <div className="p-8 text-center flex flex-col items-center bg-brand-600 relative overflow-hidden">
