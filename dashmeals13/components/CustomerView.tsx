@@ -18,6 +18,7 @@ import { ChatWindow } from './ChatWindow';
 import { StoryViewer } from './StoryViewer';
 import { OrdersView } from './OrdersView';
 import { useTranslation } from '../lib/i18n';
+import { useNativePicker } from '../utils/useNativePicker';
 import { PinSetupDialog } from './PinSetupDialog';
 import { HelpCenter } from './HelpCenter';
 import { requestNotificationPermission, sendPushNotification } from '../utils/notifications';
@@ -42,6 +43,7 @@ interface Props {
 
 export const CustomerView: React.FC<Props> = ({ user, allRestaurants, onLogout, theme, setTheme, language, setLanguage, font, setFont, onUpdateUser }) => {
   const t = useTranslation(language);
+  const { isCapacitor, pickImage } = useNativePicker();
   // State
   const [userState, setUserState] = useState<UserState>({
     location: null,
@@ -1379,7 +1381,14 @@ export const CustomerView: React.FC<Props> = ({ user, allRestaurants, onLogout, 
                                 />
 
                                 <div 
-                                    onClick={() => idCardInputRef.current?.click()}
+                                    onClick={async () => {
+                                      if (isCapacitor) {
+                                        const file = await pickImage({ asFile: true });
+                                        if (file instanceof File) setIdCardFile(file);
+                                      } else {
+                                        idCardInputRef.current?.click();
+                                      }
+                                    }}
                                     className={`p-4 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${idCardFile ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-brand-300'}`}
                                 >
                                     {idCardFile ? (
@@ -1399,7 +1408,14 @@ export const CustomerView: React.FC<Props> = ({ user, allRestaurants, onLogout, 
 
                                 {(deliveryVehicle === 'moto' || deliveryVehicle === 'voiture') && (
                                     <div 
-                                        onClick={() => licenseInputRef.current?.click()}
+                                    onClick={async () => {
+                                      if (isCapacitor) {
+                                        const file = await pickImage({ asFile: true });
+                                        if (file instanceof File) setLicenseFile(file);
+                                      } else {
+                                        licenseInputRef.current?.click();
+                                      }
+                                    }}
                                         className={`p-4 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${licenseFile ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-brand-300'}`}
                                     >
                                         {licenseFile ? (
