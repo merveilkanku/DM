@@ -22,22 +22,10 @@ export const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
             src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop" 
             alt="DashMeals Splash" 
             className="w-full h-full object-cover"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              target.parentElement!.style.backgroundColor = '#EE642A'; // Brand color fallback
-            }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col items-center justify-end pb-20">
             <div className="bg-white p-6 rounded-3xl shadow-2xl mb-8 animate-bounce">
-                <img
-                  src={APP_LOGO_URL}
-                  alt="DashMeals Logo"
-                  className="h-16 w-auto object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=D';
-                  }}
-                />
+                <img src={APP_LOGO_URL} alt="DashMeals Logo" className="h-16 w-auto object-contain" />
             </div>
             <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-2">
                 Dash<span className="text-brand-500">Meals</span>
