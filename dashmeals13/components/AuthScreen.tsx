@@ -481,8 +481,8 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
   }, []);
 
   return (
-    <div className="min-h-[100dvh] w-full bg-slate-50 dark:bg-black flex flex-col items-center p-4 relative overflow-y-auto transition-colors duration-500 scroll-smooth">
-      <div className="w-full h-4 shrink-0 sm:hidden"></div> {/* Minimal spacer */}
+    <div className="flex-1 bg-slate-50 dark:bg-black flex flex-col items-center p-4 relative overflow-y-auto transition-colors duration-500 scroll-smooth">
+      <div className="w-full h-12 shrink-0 sm:hidden"></div> {/* Smaller spacer */}
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-brand-500/10 rounded-full blur-[120px] animate-pulse"></div>
@@ -499,7 +499,7 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
         </button>
       )}
 
-      <div className="w-full max-w-md relative z-10 glass rounded-[32px] shadow-2xl overflow-hidden border border-white/40 dark:border-white/10 my-4 sm:my-8 mb-24">
+      <div className="w-full max-w-md relative z-10 glass rounded-[32px] shadow-2xl overflow-hidden border border-white/40 dark:border-white/10 my-8">
         
         {/* Header */}
         <div className="p-8 text-center flex flex-col items-center bg-brand-600 relative overflow-hidden">
