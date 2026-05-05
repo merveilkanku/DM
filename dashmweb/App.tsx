@@ -916,7 +916,7 @@ function App() {
             initial={{ opacity: 1 }} // Start with 1 to avoid white page if animation engine is slow
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-screen"
+            className="min-h-[100dvh]"
           >
             {renderContent()}
           </motion.div>
