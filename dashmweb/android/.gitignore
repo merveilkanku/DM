@@ -1,7 +1,7 @@
 # Using Android gitignore template: https://github.com/github/gitignore/blob/HEAD/Android.gitignore
 
 # Built application files
-*.apk
+# *.apk
 *.aar
 *.ap_
 *.aab
@@ -21,7 +21,7 @@ out/
 
 # Gradle files
 .gradle/
-build/
+# build/
 
 # Local configuration file (sdk path, etc)
 local.properties
