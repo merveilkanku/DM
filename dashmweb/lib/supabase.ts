@@ -14,6 +14,10 @@ const VALID_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmF
 const supabaseKey = (envKey && (envKey.startsWith('eyJ') || envKey.startsWith('sb_publishable_'))) ? envKey : VALID_ANON_KEY;
 
 export const isDefaultProject = false;
+
+// Détection de Capacitor pour adapter le flux d'authentification
+const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor;
+
 // Note: Si vous recevez l'erreur "captcha verification process failed", 
 // vous devez désactiver "Enable Captcha protection" dans votre dashboard Supabase :
 // Authentication > Settings > Enable Captcha protection (à décocher)
@@ -22,7 +26,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'implicit'
+    flowType: isCapacitor ? 'pkce' : 'implicit'
   },
   global: {
     fetch: (input, init) => fetchWithRetry(input, init)

@@ -10,6 +10,11 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/cli": "^8.3.1",
+    "@capacitor/core": "^8.3.1",
+    "@capacitor/keyboard": "^8.0.3",
     "@google/genai": "^1.48.0",
     "@supabase/supabase-js": "2.39.7",
     "@types/express": "^5.0.6",
@@ -26,6 +31,7 @@
     "tsx": "^4.21.0"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^22.14.0",

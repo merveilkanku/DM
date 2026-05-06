@@ -141,10 +141,17 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
       }));
 
       const currentOrigin = window.location.origin;
-      console.log("OAuth Redirect URL:", currentOrigin);
+      const isCapacitor = (window as any).Capacitor;
+
+      // En mode APK, l'URL de redirection DOIT correspondre au schéma configuré dans Supabase et l'App
+      const redirectTo = isCapacitor
+        ? 'com.dashmeals.android://callback'
+        : currentOrigin;
+
+      console.log("OAuth Redirect URL:", redirectTo);
 
       // Detect if we are in the AI Studio preview
-      const isPreview = currentOrigin.includes('.run.app');
+      const isPreview = currentOrigin.includes('.run.app') && !isCapacitor;
 
       if (isPreview) {
           // In preview (iframe), we MUST use a popup
@@ -192,12 +199,10 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
           }
       } else {
           // In APK or standard web, use normal redirect (no popup)
-          // This fixes the issue where window.open opens the external browser in APKs
           const { error } = await supabase.auth.signInWithOAuth({
             provider: provider,
             options: {
-              redirectTo: currentOrigin,
-              // skipBrowserRedirect is false by default, so it will redirect the current window
+              redirectTo: redirectTo,
               queryParams: {
                 access_type: 'offline',
                 prompt: 'consent',
@@ -466,7 +471,7 @@ export const AuthScreen: React.FC<Props> = ({ onLogin, isSupabaseReachable = tru
 
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden transition-colors duration-500">
+    <div className="min-h-[100dvh] bg-slate-50 dark:bg-black flex flex-col items-center justify-start sm:justify-center p-4 pt-10 sm:pt-4 relative overflow-y-auto transition-colors duration-500">
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-brand-500/10 rounded-full blur-[120px] animate-pulse"></div>

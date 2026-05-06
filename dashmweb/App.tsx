@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { App as CapApp } from '@capacitor/app';
 import { supabase } from './lib/supabase';
 import { MOCK_RESTAURANTS, KINSHASA_CENTER_LAT, KINSHASA_CENTER_LNG } from './constants';
 import { Restaurant, User, UserRole, MenuItem, BusinessType, Theme, Language, AppFont } from './types';
@@ -131,11 +132,25 @@ function App() {
 
   // Initialisation et écoute de la session
   useEffect(() => {
+    // Handle Capacitor Deep Links
+    CapApp.addListener('appUrlOpen', async (data: any) => {
+      console.log('App opened with URL:', data.url);
+      const url = new URL(data.url);
+
+      // Supabase Deep Link Handling
+      if (url.hash || url.search) {
+        const { data: sessionData, error } = await supabase.auth.getSession();
+        if (sessionData.session) {
+          console.log("Session recovered via Deep Link");
+        }
+      }
+    });
+
     const initSession = async () => {
       console.log("🚀 [Auth] Début initSession");
       setIsAppInitializing(true);
 
-      // Force le stop du loading après 4s quoi qu'il arrive (Fail-safe ultra rapide)
+      // Force le stop du loading après 8s pour mobile (Fail-safe)
       const safetyTimer = setTimeout(() => {
         if (initializingRef.current || loadingRef.current) {
           console.warn("⚠️ [Auth] Safety timeout. Forcing UI display.");
@@ -143,7 +158,7 @@ function App() {
           setLoading(false);
           setShowSplash(false);
         }
-      }, 4000);
+      }, 8000);
 
       try {
         if (isRecoveryMode) {
@@ -901,7 +916,7 @@ function App() {
             initial={{ opacity: 1 }} // Start with 1 to avoid white page if animation engine is slow
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-screen"
+            className="min-h-[100dvh]"
           >
             {renderContent()}
           </motion.div>

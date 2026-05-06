@@ -16,6 +16,12 @@
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   letter-spacing: -0.01em;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+input, textarea, [contenteditable="true"] {
+  user-select: text;
 }
 
 html, body {
@@ -24,6 +30,8 @@ html, body {
   image-rendering: -webkit-optimize-contrast;
   background-color: #FDFDFD;
   overflow-x: hidden;
+  /* position: fixed; Removed to allow natural scrolling with Capacitor resize: body */
+  -webkit-overflow-scrolling: touch;
 }
 
 .dark body {
